@@ -1,5 +1,5 @@
 import { Game as MainGame } from './scenes/Game';
-import { AUTO, Game, Scale,Types } from 'phaser';
+import { AUTO, Game, Scale, Types } from 'phaser';
 
 // Find out more information about the Game Config at:
 // https://docs.phaser.io/api-documentation/typedef/types-core#gameconfig
@@ -8,10 +8,17 @@ const config: Types.Core.GameConfig = {
   width: 1024,
   height: 768,
   parent: 'game-container',
-  backgroundColor: '#028af8',
+  backgroundColor: '#ffa1ad',
   scale: {
-    mode: Scale.FIT,
+    mode: Scale.NONE,
     autoCenter: Scale.CENTER_BOTH
+  },
+  physics: {
+    default: "matter",
+    matter: {
+      gravity: { x: 0, y: 1 },
+      debug: true,
+    },
   },
   scene: [
     MainGame
