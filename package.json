@@ -1,12 +1,20 @@
 {
   "name": "suika",
-  "module": "index.ts",
-  "type": "module",
-  "private": true,
-  "devDependencies": {
-    "@types/bun": "latest"
+  "description": "The popular fruit merging game, but made by me",
+  "version": "1.0.0",
+  "author": "DevKokooo <devkoko.vt@gmail.com> (https://devkoko.com)",
+  "scripts": {
+    "dev": "bun log.js dev && bunx --bun vite --config vite/config.dev.mjs",
+    "build": "bun log.js build && bunx --bun vite build --config vite/config.prod.mjs",
+    "dev-nolog": "bunx --bun vite --config vite/config.dev.mjs",
+    "build-nolog": "bunx --bun vite build --config vite/config.prod.mjs"
   },
-  "peerDependencies": {
-    "typescript": "^5"
+  "devDependencies": {
+    "typescript": "~5.7.2",
+    "vite": "^6.3.1",
+    "terser": "^5.39.0"
+  },
+  "dependencies": {
+    "phaser": "^3.90.0"
   }
 }
