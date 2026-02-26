@@ -10,13 +10,14 @@ export class Game extends Scene {
   // red-500, orange-400, yellow-400, lime-500, cyan-400, violet-600
   colors = [0xfb2c36, 0xff8904, 0xfcc800, 0x7ccf00, 0x00d3f2, 0x7f22fe];
 
-  nextBallColor = -1;
-  nextBallRadius = -1;
+  nextBall = { radius: -1, color: -1 };
+  storedBall = { radius: -1, color: -1 };
 
   interface: Phaser.GameObjects.Graphics;
   ballContainer: Phaser.GameObjects.Graphics;
   previewBall: Phaser.GameObjects.Graphics;
   actualBall: Phaser.GameObjects.Graphics;
+  storedBallUI: Phaser.GameObjects.Graphics;
 
   constructor() {
     super('Game');
@@ -28,6 +29,7 @@ export class Game extends Scene {
     this.ballContainer = this.add.graphics();
     this.previewBall = this.add.graphics();
     this.actualBall = this.add.graphics();
+    this.storedBallUI = this.add.graphics();
 
     this.generateNextBall();
   }
@@ -46,6 +48,42 @@ export class Game extends Scene {
     this.interface.lineStyle(4, PINK_100);
     this.interface.strokeRect(WIDTH - 200, 80, 150, 150);
 
+    // Display stored ball
+    this.add.text(WIDTH - 200, 275, "STORAGE (PRESS Z)", {
+      fontStyle: "bold", fontFamily: "monospace", fontSize: 20,
+    });
+    this.interface.lineStyle(4, PINK_100);
+    this.interface.strokeRect(WIDTH - 200, 305, 150, 150);
+
+    // Keyboard input (Z to store)
+    const keyZ = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
+    keyZ?.on("down", () => {
+      const sb = this.storedBall;
+
+      // If there is ball, swap the balls
+      if(sb.color !== -1 && sb.radius !== -1) {
+        const nb = this.nextBall;
+
+        this.storedBall = nb;
+        this.nextBall = sb;
+
+        this.previewStoredBall({ ballRadius: nb.radius, ballColor: nb.color });
+        this.previewNextBall({ ballRadius: sb.radius, ballColor: sb.color });
+      }
+      // If no ball, put ball in
+      else {
+        const nb = this.nextBall;
+
+        this.storedBall = {
+          radius: nb.radius,
+          color: nb.color,
+        };
+
+        this.previewStoredBall({ ballRadius: nb.radius, ballColor: nb.color });
+        this.generateNextBall();
+      }
+    });
+
     const boxLeft = x - width / 2, boxRight = x + width / 2;
     const boxTop = y - height / 2;
 
@@ -61,25 +99,23 @@ export class Game extends Scene {
         pointer.x < boxRight
       ) {
         // TODO: on click should just release the ball, it should already be visible and following cursor
-        const ball = this.add.circle(pointer.x, pointer.y, this.nextBallRadius, this.nextBallColor);
+        const ball = this.add.circle(pointer.x, pointer.y, this.nextBall.radius, this.nextBall.color);
         ball.setStrokeStyle(2, 0xe7000b);
 
         this.matter.add.gameObject(ball, {
-          shape: { type: "circle", radius: this.nextBallRadius },
+          shape: { type: "circle", radius: this.nextBall.radius },
           restitution: 0.2,
         });
         this.generateNextBall();
-        this.holdNextBall({ pointer });
+        this.cursorHoldNextBall({ pointer });
       }
     });
-
-    // ----------------------------------------------
 
     // Ball cursor tracking
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
       // Display next ball at cursor
       if(pointer.y < boxTop && pointer.x > boxLeft && pointer.x < boxRight) {
-        this.holdNextBall({ pointer });
+        this.cursorHoldNextBall({ pointer });
       }
     });
 
@@ -136,10 +172,8 @@ export class Game extends Scene {
     const radius = this.radii[index];
     const color = this.colors[index];
 
-    this.nextBallRadius = radius;
-    this.nextBallColor = color;
-
     this.previewNextBall({ ballRadius: radius, ballColor: color });
+    this.nextBall = { radius, color };
   }
 
   private previewNextBall({ ballRadius, ballColor }: {
@@ -153,14 +187,25 @@ export class Game extends Scene {
     previewBall.strokeCircle(WIDTH - 125, 150, ballRadius);
   }
 
-  private holdNextBall({ pointer }: {
+  private cursorHoldNextBall({ pointer }: {
     pointer: Phaser.Input.Pointer;
   }) {
     const actual = this.actualBall;
     actual.clear();
 
-    actual.fillStyle(this.nextBallColor);
-    actual.fillCircle(pointer.x, pointer.y, this.nextBallRadius);
-    actual.strokeCircle(pointer.x, pointer.y, this.nextBallRadius);
+    actual.fillStyle(this.nextBall.color);
+    actual.fillCircle(pointer.x, pointer.y, this.nextBall.radius);
+    actual.strokeCircle(pointer.x, pointer.y, this.nextBall.radius);
+  }
+
+  private previewStoredBall({ ballRadius, ballColor }: {
+    ballRadius: number; ballColor: number;
+  }) {
+    const storedBall = this.storedBallUI;
+    storedBall.clear();
+
+    storedBall.fillStyle(ballColor);
+    storedBall.fillCircle(WIDTH - 125, 375, ballRadius);
+    storedBall.strokeCircle(WIDTH - 125, 375, ballRadius);
   }
 }
