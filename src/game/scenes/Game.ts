@@ -1,6 +1,8 @@
 import { Scene } from 'phaser';
 import { HEIGHT, WIDTH } from '../main';
 
+const PINK_100 = 0xfce7f3;
+
 export class Game extends Scene {
   constructor() {
     super('Game');
@@ -17,7 +19,7 @@ export class Game extends Scene {
     const thickness = 16;
 
     const graphics = this.add.graphics();
-    graphics.lineStyle(thickness, 0xfce7f3);
+    graphics.lineStyle(thickness, PINK_100);
 
     // Bottom wall
     this.matter.add.rectangle(x, y - (thickness / 2) + height / 2, width, thickness, { isStatic: true });
@@ -41,6 +43,19 @@ export class Game extends Scene {
     const boxLeft = x - width / 2, boxRight = x + width / 2;
     const boxTop = y - height / 2;
 
+    // Dotted line on top, boundary to spawn balls
+    const DOTTED_THICKNESS = 4;
+    graphics.lineStyle(DOTTED_THICKNESS, PINK_100);
+
+    const startX = x - width / 2, endX = x + width / 2;
+    const dottedY = y + (DOTTED_THICKNESS / 2) - height / 2;
+
+    const stepAmount = 10, stepSize = 25;
+    for(let x = startX; x < endX; x += stepAmount + stepSize) {
+      graphics.lineBetween(x, dottedY, x + stepSize, dottedY);
+    }
+    graphics.strokePath();
+
     this.matter.world.engine.positionIterations = 10;
     this.matter.world.engine.velocityIterations = 6;
     this.matter.world.engine.constraintIterations = 4
@@ -55,7 +70,7 @@ export class Game extends Scene {
         // +4, +8, +12, +16, +20
         const radii = [12, 16, 24, 36, 54, 74];
         // TODO: update logic to be able to spawn unlocked balls ocassionally
-        const index = Phaser.Math.Between(0, 2);
+        const index = Phaser.Math.Between(0, 4);
         const radius = radii[index];
 
         // red-500, orange-400, yellow-400, lime-500, cyan-400, violet-600
