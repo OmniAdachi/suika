@@ -100,7 +100,7 @@ export class Game extends Scene {
       ) {
         // TODO: on click should just release the ball, it should already be visible and following cursor
         const ball = this.add.circle(pointer.x, pointer.y, this.nextBall.radius, this.nextBall.color);
-        ball.setStrokeStyle(2, 0xe7000b);
+        ball.setStrokeStyle(4, PINK_100);
 
         this.matter.add.gameObject(ball, {
           shape: { type: "circle", radius: this.nextBall.radius },
@@ -184,6 +184,7 @@ export class Game extends Scene {
 
     previewBall.fillStyle(ballColor);
     previewBall.fillCircle(WIDTH - 125, 150, ballRadius);
+    previewBall.lineStyle(4, PINK_100);
     previewBall.strokeCircle(WIDTH - 125, 150, ballRadius);
   }
 
@@ -195,6 +196,7 @@ export class Game extends Scene {
 
     actual.fillStyle(this.nextBall.color);
     actual.fillCircle(pointer.x, pointer.y, this.nextBall.radius);
+    actual.lineStyle(4, PINK_100);
     actual.strokeCircle(pointer.x, pointer.y, this.nextBall.radius);
   }
 
@@ -206,6 +208,7 @@ export class Game extends Scene {
 
     storedBall.fillStyle(ballColor);
     storedBall.fillCircle(WIDTH - 125, 375, ballRadius);
+    storedBall.lineStyle(4, PINK_100);
     storedBall.strokeCircle(WIDTH - 125, 375, ballRadius);
   }
 }
