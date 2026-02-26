@@ -1,4 +1,5 @@
 import { Scene } from 'phaser';
+import { HEIGHT, WIDTH } from '../main';
 
 export class Game extends Scene {
   constructor() {
@@ -11,8 +12,8 @@ export class Game extends Scene {
 
   create() {
     // Container with open top
-    const width = 512, height = 512;
-    const x = 256 + width / 2, y = 192 + width / 2;
+    const width = WIDTH / 2, height = WIDTH / 2;
+    const x = WIDTH - width, y = 100 + HEIGHT / 2;
     const thickness = 16;
 
     const graphics = this.add.graphics();
@@ -35,8 +36,40 @@ export class Game extends Scene {
 
     graphics.strokePath();
 
-    // Ball
-    const ball = this.add.circle(x, y - 320, 24, 0xe7000b);
-    this.matter.add.gameObject(ball, { restitution: 0.2 });
+    // ------------------------------------------------
+
+    const boxLeft = x - width / 2, boxRight = x + width / 2;
+    const boxTop = y - height / 2;
+
+    this.matter.world.engine.positionIterations = 10;
+    this.matter.world.engine.velocityIterations = 6;
+    this.matter.world.engine.constraintIterations = 4
+
+    // Spawn ball on click above container
+    this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      if(
+        pointer.y < boxTop &&
+        pointer.x > boxLeft &&
+        pointer.x < boxRight
+      ) {
+        // +4, +8, +12, +16, +20
+        const radii = [12, 16, 24, 36, 54, 74];
+        // TODO: update logic to be able to spawn unlocked balls ocassionally
+        const index = Phaser.Math.Between(0, 2);
+        const radius = radii[index];
+
+        // red-500, orange-400, yellow-400, lime-500, cyan-400, violet-600
+        const colors = [0xfb2c36, 0xff8904, 0xfcc800, 0x7ccf00, 0x00d3f2, 0x7f22fe];
+        const color = colors[index];
+
+        const ball = this.add.circle(pointer.x, pointer.y, radius, color);
+        ball.setStrokeStyle(2, 0xe7000b);
+
+        this.matter.add.gameObject(ball, {
+          shape: { type: "circle", radius },
+          restitution: 0.2,
+        });
+      }
+    });
   }
 }
