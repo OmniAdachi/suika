@@ -4,21 +4,88 @@ import { HEIGHT, WIDTH } from '../main';
 const PINK_100 = 0xfce7f3;
 
 export class Game extends Scene {
+  // BALL RELATED
+  // +4, +8, +12, +16, +20
+  radii = [12, 16, 24, 36, 54, 74];
+  // red-500, orange-400, yellow-400, lime-500, cyan-400, violet-600
+  colors = [0xfb2c36, 0xff8904, 0xfcc800, 0x7ccf00, 0x00d3f2, 0x7f22fe];
+
+  nextBallColor = -1;
+  nextBallRadius = -1;
+
+  interface: Phaser.GameObjects.Graphics;
+  ballContainer: Phaser.GameObjects.Graphics;
+  previewBall: Phaser.GameObjects.Graphics;
+
   constructor() {
     super('Game');
   }
 
   preload() {
     this.load.setPath('assets');
+    this.interface = this.add.graphics();
+    this.ballContainer = this.add.graphics();
+    this.previewBall = this.add.graphics();
+
+    this.generateNextBall();
   }
 
   create() {
-    // Container with open top
     const width = WIDTH / 2, height = WIDTH / 2;
     const x = WIDTH - width, y = 100 + HEIGHT / 2;
     const thickness = 16;
 
-    const graphics = this.add.graphics();
+    this.renderBallContainer({ width, height, x, y, thickness });
+
+    // Display next ball
+    this.add.text(WIDTH - 200, 50, "NEXT BALL", {
+      fontStyle: "bold", fontFamily: "monospace", fontSize: 20,
+    });
+    this.interface.lineStyle(4, PINK_100);
+    this.interface.strokeRect(WIDTH - 200, 80, 150, 150);
+
+    const boxLeft = x - width / 2, boxRight = x + width / 2;
+    const boxTop = y - height / 2;
+
+    this.matter.world.engine.positionIterations = 10;
+    this.matter.world.engine.velocityIterations = 6;
+    this.matter.world.engine.constraintIterations = 4
+
+    // Spawn ball on click above container
+    this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      if(
+        pointer.y < boxTop &&
+        pointer.x > boxLeft &&
+        pointer.x < boxRight
+      ) {
+        // TODO: on click should just release the ball, it should already be visible and following cursor
+        const ball = this.add.circle(pointer.x, pointer.y, this.nextBallRadius, this.nextBallColor);
+        ball.setStrokeStyle(2, 0xe7000b);
+
+        this.matter.add.gameObject(ball, {
+          shape: { type: "circle", radius: this.nextBallRadius },
+          restitution: 0.2,
+        });
+
+        this.generateNextBall();
+      }
+    });
+
+    // ----------------------------------------------
+
+    // Ball collision --> merge same size / color
+    this.matter.world.on(Phaser.Physics.Matter.Events.COLLISION_START, (event: Phaser.Types.Physics.Matter.MatterCollisionData) => {
+      console.log(event);
+    });
+  }
+
+  private renderBallContainer({ width, height, x, y, thickness}: {
+    width: number; height: number;
+    x: number; y: number;
+    thickness: number;
+  }) {
+    // Container with open top
+    const graphics = this.ballContainer;
     graphics.lineStyle(thickness, PINK_100);
 
     // Bottom wall
@@ -38,11 +105,6 @@ export class Game extends Scene {
 
     graphics.strokePath();
 
-    // ------------------------------------------------
-
-    const boxLeft = x - width / 2, boxRight = x + width / 2;
-    const boxTop = y - height / 2;
-
     // Dotted line on top, boundary to spawn balls
     const DOTTED_THICKNESS = 4;
     graphics.lineStyle(DOTTED_THICKNESS, PINK_100);
@@ -55,43 +117,29 @@ export class Game extends Scene {
       graphics.lineBetween(x, dottedY, x + stepSize, dottedY);
     }
     graphics.strokePath();
+  }
 
-    this.matter.world.engine.positionIterations = 10;
-    this.matter.world.engine.velocityIterations = 6;
-    this.matter.world.engine.constraintIterations = 4
+  private generateNextBall() {
+    // Randomize ball generation
+    // TODO: update logic to be able to spawn unlocked balls ocassionally
+    const index = Phaser.Math.Between(0, 3);
+    const radius = this.radii[index];
+    const color = this.colors[index];
 
-    // Spawn ball on click above container
-    this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
-      if(
-        pointer.y < boxTop &&
-        pointer.x > boxLeft &&
-        pointer.x < boxRight
-      ) {
-        // +4, +8, +12, +16, +20
-        const radii = [12, 16, 24, 36, 54, 74];
-        // TODO: update logic to be able to spawn unlocked balls ocassionally
-        const index = Phaser.Math.Between(0, 3);
-        const radius = radii[index];
+    this.nextBallRadius = radius;
+    this.nextBallColor = color;
 
-        // red-500, orange-400, yellow-400, lime-500, cyan-400, violet-600
-        const colors = [0xfb2c36, 0xff8904, 0xfcc800, 0x7ccf00, 0x00d3f2, 0x7f22fe];
-        const color = colors[index];
+    this.previewNextBall({ ballRadius: radius, ballColor: color });
+  }
 
-        const ball = this.add.circle(pointer.x, pointer.y, radius, color);
-        ball.setStrokeStyle(2, 0xe7000b);
+  private previewNextBall({ ballRadius, ballColor }: {
+    ballRadius: number; ballColor: number;
+  }) {
+    const previewBall = this.previewBall;
+    previewBall.clear();
 
-        this.matter.add.gameObject(ball, {
-          shape: { type: "circle", radius },
-          restitution: 0.2,
-        }).setName("BALL");
-      }
-    });
-
-    // ----------------------------------------------
-
-    // Ball collision --> merge same size / color
-    this.matter.world.on(Phaser.Physics.Matter.Events.COLLISION_START, (event: Phaser.Types.Physics.Matter.MatterCollisionData) => {
-      console.log(event);
-    });
+    previewBall.fillStyle(ballColor);
+    previewBall.fillCircle(WIDTH - 125, 150, ballRadius);
+    previewBall.strokeCircle(WIDTH - 125, 150, ballRadius);
   }
 }
