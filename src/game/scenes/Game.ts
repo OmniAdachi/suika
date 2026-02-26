@@ -16,6 +16,7 @@ export class Game extends Scene {
   interface: Phaser.GameObjects.Graphics;
   ballContainer: Phaser.GameObjects.Graphics;
   previewBall: Phaser.GameObjects.Graphics;
+  actualBall: Phaser.GameObjects.Graphics;
 
   constructor() {
     super('Game');
@@ -26,6 +27,7 @@ export class Game extends Scene {
     this.interface = this.add.graphics();
     this.ballContainer = this.add.graphics();
     this.previewBall = this.add.graphics();
+    this.actualBall = this.add.graphics();
 
     this.generateNextBall();
   }
@@ -66,16 +68,24 @@ export class Game extends Scene {
           shape: { type: "circle", radius: this.nextBallRadius },
           restitution: 0.2,
         });
-
         this.generateNextBall();
+        this.holdNextBall({ pointer });
       }
     });
 
     // ----------------------------------------------
 
+    // Ball cursor tracking
+    this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
+      // Display next ball at cursor
+      if(pointer.y < boxTop && pointer.x > boxLeft && pointer.x < boxRight) {
+        this.holdNextBall({ pointer });
+      }
+    });
+
     // Ball collision --> merge same size / color
     this.matter.world.on(Phaser.Physics.Matter.Events.COLLISION_START, (event: Phaser.Types.Physics.Matter.MatterCollisionData) => {
-      console.log(event);
+      // console.log(event);
     });
   }
 
@@ -141,5 +151,16 @@ export class Game extends Scene {
     previewBall.fillStyle(ballColor);
     previewBall.fillCircle(WIDTH - 125, 150, ballRadius);
     previewBall.strokeCircle(WIDTH - 125, 150, ballRadius);
+  }
+
+  private holdNextBall({ pointer }: {
+    pointer: Phaser.Input.Pointer;
+  }) {
+    const actual = this.actualBall;
+    actual.clear();
+
+    actual.fillStyle(this.nextBallColor);
+    actual.fillCircle(pointer.x, pointer.y, this.nextBallRadius);
+    actual.strokeCircle(pointer.x, pointer.y, this.nextBallRadius);
   }
 }
