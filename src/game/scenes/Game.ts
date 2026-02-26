@@ -19,6 +19,8 @@ export class Game extends Scene {
   actualBall: Phaser.GameObjects.Graphics;
   storedBallUI: Phaser.GameObjects.Graphics;
 
+  activePointer: Phaser.Input.Pointer;
+
   constructor() {
     super('Game');
   }
@@ -69,6 +71,7 @@ export class Game extends Scene {
 
         this.previewStoredBall({ ballRadius: nb.radius, ballColor: nb.color });
         this.previewNextBall({ ballRadius: sb.radius, ballColor: sb.color });
+        this.cursorHoldNextBall({ pointer: this.activePointer });
       }
       // If no ball, put ball in
       else {
@@ -81,6 +84,7 @@ export class Game extends Scene {
 
         this.previewStoredBall({ ballRadius: nb.radius, ballColor: nb.color });
         this.generateNextBall();
+        this.cursorHoldNextBall({ pointer: this.activePointer });
       }
     });
 
@@ -98,7 +102,8 @@ export class Game extends Scene {
         pointer.x > boxLeft &&
         pointer.x < boxRight
       ) {
-        // TODO: on click should just release the ball, it should already be visible and following cursor
+        this.activePointer = pointer;
+
         const ball = this.add.circle(pointer.x, pointer.y, this.nextBall.radius, this.nextBall.color);
         ball.setStrokeStyle(4, PINK_100);
 
@@ -115,6 +120,7 @@ export class Game extends Scene {
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
       // Display next ball at cursor
       if(pointer.y < boxTop && pointer.x > boxLeft && pointer.x < boxRight) {
+        this.activePointer = pointer;
         this.cursorHoldNextBall({ pointer });
       }
     });
