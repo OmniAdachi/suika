@@ -70,7 +70,7 @@ export class Game extends Scene {
         // +4, +8, +12, +16, +20
         const radii = [12, 16, 24, 36, 54, 74];
         // TODO: update logic to be able to spawn unlocked balls ocassionally
-        const index = Phaser.Math.Between(0, 4);
+        const index = Phaser.Math.Between(0, 3);
         const radius = radii[index];
 
         // red-500, orange-400, yellow-400, lime-500, cyan-400, violet-600
@@ -83,8 +83,15 @@ export class Game extends Scene {
         this.matter.add.gameObject(ball, {
           shape: { type: "circle", radius },
           restitution: 0.2,
-        });
+        }).setName("BALL");
       }
+    });
+
+    // ----------------------------------------------
+
+    // Ball collision --> merge same size / color
+    this.matter.world.on(Phaser.Physics.Matter.Events.COLLISION_START, (event: Phaser.Types.Physics.Matter.MatterCollisionData) => {
+      console.log(event);
     });
   }
 }
