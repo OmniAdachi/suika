@@ -30,6 +30,8 @@ export class Game extends Scene {
   nextBallUI: Phaser.GameObjects.Graphics;
   storedBallUI: Phaser.GameObjects.Graphics;
 
+  scoreText: Phaser.GameObjects.Text;
+
   activePointer: Phaser.Input.Pointer;
 
   constructor() {
@@ -55,12 +57,23 @@ export class Game extends Scene {
 
     this.renderBallContainer({ width, height, x, y, thickness });
 
+   
+    // Display Score
+    this.add.text(WIDTH - 962, 100, "SCORE", {
+      fontStyle: "bold", fontFamily: "monospace", fontSize: 40,
+    });
+  
+    this.scoreText = this.add.text(WIDTH - 962, 140, "0", {
+      fontStyle: "bold", fontFamily: "monospace", fontSize: 35,
+    });
+   
+
     // Display next ball
-    this.add.text(WIDTH - 200, 50, "NEXT BALL", {
+    this.add.text(WIDTH - 200, 100, "NEXT BALL", {
       fontStyle: "bold", fontFamily: "monospace", fontSize: 20,
     });
     this.interface.lineStyle(4, PINK_100);
-    this.interface.strokeRect(WIDTH - 200, 80, 150, 150);
+    this.interface.strokeRect(WIDTH - 200, 120, 150, 150);
 
     // Display stored ball
     this.add.text(WIDTH - 200, 275, "STORAGE (PRESS Z)", {
@@ -196,16 +209,17 @@ export class Game extends Scene {
 
     const ball = this.add.circle(x, y, nextTier.radius, nextTier.color);
     ball.setStrokeStyle(1, PINK_100);
-
+    
+    this.increaseScore(tierA);
+    
     objA?.destroy();
+    
+    objB?.destroy();
 
     this.matter.add.gameObject(ball, {
       shape: { type: "circle", radius: nextTier.radius },
       restitution: 0.2,
     }).setData({ mergeable: true, tier: nextTier.tier });
-
-    objB?.destroy();
-    this.increaseScore
   }
 
   private renderBallContainer({ width, height, x, y, thickness}: {
@@ -304,9 +318,9 @@ export class Game extends Scene {
     previewBall.clear();
 
     previewBall.fillStyle(ballColor);
-    previewBall.fillCircle(WIDTH - 125, 150, ballRadius);
+    previewBall.fillCircle(WIDTH - 125, 200, ballRadius);
     previewBall.lineStyle(1, PINK_100);
-    previewBall.strokeCircle(WIDTH - 125, 150, ballRadius);
+    previewBall.strokeCircle(WIDTH - 125, 200, ballRadius);
   }
 
   private previewStoredBall({ ballRadius, ballColor }: {
@@ -322,9 +336,10 @@ export class Game extends Scene {
   }
   private increaseScore(tier: TIER){
     const index = this.tiers.indexOf(tier);
-    const CurrentFib = this.FibonacciSequence.indexOf(tier)
+    const CurrentFib = this.FibonacciSequence[index]
     
-    this.score = this.score + (index * 2 + CurrentFib)
-
+    this.score += (index * 2 + CurrentFib)
+   this.scoreText.setText(`${this.score}`)
+  console.log(this.score)
   }
 }
