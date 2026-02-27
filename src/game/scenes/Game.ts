@@ -174,7 +174,7 @@ export class Game extends Scene {
     ) => {
       this.handleMerging(bodyA, bodyB);
     });
-
+ 
     this.matter.world.on("collisionend", (
       _: Phaser.Physics.Matter.Events.CollisionEndEvent,
       bodyA: MatterJS.BodyType,
@@ -206,20 +206,21 @@ export class Game extends Scene {
 
     // Get B coordinates and create new ball with upgraded tier to take its place
     const { x, y } = bodyB.position;
+  
+    objA?.destroy();
+    
+    objB?.destroy();
 
     const ball = this.add.circle(x, y, nextTier.radius, nextTier.color);
     ball.setStrokeStyle(1, PINK_100);
     
     this.increaseScore(tierA);
-    
-    objA?.destroy();
-    
-    objB?.destroy();
 
     this.matter.add.gameObject(ball, {
       shape: { type: "circle", radius: nextTier.radius },
       restitution: 0.2,
     }).setData({ mergeable: true, tier: nextTier.tier });
+
   }
 
   private renderBallContainer({ width, height, x, y, thickness}: {
