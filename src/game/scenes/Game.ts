@@ -13,13 +13,14 @@ export class Game extends Scene {
   colors = [0xfb2c36, 0xff8904, 0xfcc800, 0x7ccf00, 0x00d3f2, 0x7f22fe];
   tiers = [TIER.ONE, TIER.TWO, TIER.THREE, TIER.FOUR, TIER.FIVE, TIER.SIX];
 
+  currentBall = { radius: -1, color: -1, tier: TIER.NONE };
   nextBall = { radius: -1, color: -1, tier: TIER.NONE };
   storedBall = { radius: -1, color: -1, tier: TIER.NONE };
 
   interface: Phaser.GameObjects.Graphics;
   ballContainer: Phaser.GameObjects.Graphics;
   previewBall: Phaser.GameObjects.Graphics;
-  actualBall: Phaser.GameObjects.Graphics;
+  nextBallUI: Phaser.GameObjects.Graphics;
   storedBallUI: Phaser.GameObjects.Graphics;
 
   activePointer: Phaser.Input.Pointer;
@@ -33,9 +34,10 @@ export class Game extends Scene {
     this.interface = this.add.graphics();
     this.ballContainer = this.add.graphics();
     this.previewBall = this.add.graphics();
-    this.actualBall = this.add.graphics();
+    this.nextBallUI = this.add.graphics();
     this.storedBallUI = this.add.graphics();
 
+    this.generateCurrentBall();
     this.generateNextBall();
   }
 
@@ -67,28 +69,33 @@ export class Game extends Scene {
 
       // If there is ball, swap the balls
       if(sb.color !== -1 && sb.radius !== -1) {
-        const nb = this.nextBall;
+        const cb = this.currentBall;
 
-        this.storedBall = nb;
-        this.nextBall = sb;
+        this.storedBall = cb;
+        this.currentBall = sb;
 
-        this.previewStoredBall({ ballRadius: nb.radius, ballColor: nb.color });
-        this.previewNextBall({ ballRadius: sb.radius, ballColor: sb.color });
-        this.cursorHoldNextBall({ pointer: this.activePointer });
+        this.previewStoredBall({ ballRadius: cb.radius, ballColor: cb.color });
+        this.previewCurrentBall({ pointer: this.activePointer });
       }
       // If no ball, put ball in
       else {
+        const cb = this.currentBall;
         const nb = this.nextBall;
 
         this.storedBall = {
+          radius: cb.radius,
+          color: cb.color,
+          tier: cb.tier,
+        };
+        this.currentBall = {
           radius: nb.radius,
           color: nb.color,
           tier: nb.tier,
         };
 
-        this.previewStoredBall({ ballRadius: nb.radius, ballColor: nb.color });
+        this.previewStoredBall({ ballRadius: cb.radius, ballColor: cb.color });
         this.generateNextBall();
-        this.cursorHoldNextBall({ pointer: this.activePointer });
+        this.previewCurrentBall({ pointer: this.activePointer });
       }
     });
 
@@ -108,16 +115,17 @@ export class Game extends Scene {
       ) {
         this.activePointer = pointer;
 
-        const ball = this.add.circle(pointer.x, pointer.y, this.nextBall.radius, this.nextBall.color);
+        const ball = this.add.circle(pointer.x, pointer.y, this.currentBall.radius, this.currentBall.color);
         ball.setStrokeStyle(4, PINK_100);
 
         this.matter.add.gameObject(ball, {
-          shape: { type: "circle", radius: this.nextBall.radius },
+          shape: { type: "circle", radius: this.currentBall.radius },
           restitution: 0.1,
-        }).setData({ mergeable: true, tier: this.nextBall.tier });
+        }).setData({ mergeable: true, tier: this.currentBall.tier });
 
+        this.currentBall = this.nextBall;
         this.generateNextBall();
-        this.cursorHoldNextBall({ pointer });
+        this.previewCurrentBall({ pointer });
       }
     });
 
@@ -126,7 +134,7 @@ export class Game extends Scene {
       // Display next ball at cursor
       if(pointer.y < boxTop && pointer.x > boxLeft && pointer.x < boxRight) {
         this.activePointer = pointer;
-        this.cursorHoldNextBall({ pointer });
+        this.previewCurrentBall({ pointer });
       }
     });
 
@@ -226,15 +234,39 @@ export class Game extends Scene {
     return { radius: nextRadius, color: nextColor, tier: nextTier };
   }
 
-  private generateNextBall() {
-    // Randomize ball generation
+  private generateRandomBall() {
     // TODO: update logic to be able to spawn unlocked balls ocassionally
     const index = Phaser.Math.Between(0, 3);
     const radius = this.radii[index];
     const color = this.colors[index];
+    const tier = this.tiers[index];
+
+    return { radius, color, tier };
+  }
+
+  private generateCurrentBall() {
+    const { radius, color, tier } = this.generateRandomBall();
+
+    this.currentBall = { radius, color, tier };
+  }
+
+  private previewCurrentBall({ pointer }: {
+    pointer: Phaser.Input.Pointer;
+  }) {
+    const current = this.nextBallUI;
+    current.clear();
+
+    current.fillStyle(this.currentBall.color);
+    current.fillCircle(pointer.x, pointer.y, this.currentBall.radius);
+    current.lineStyle(4, PINK_100);
+    current.strokeCircle(pointer.x, pointer.y, this.currentBall.radius);
+  }
+
+  private generateNextBall() {
+    const { radius, color, tier } = this.generateRandomBall();
 
     this.previewNextBall({ ballRadius: radius, ballColor: color });
-    this.nextBall = { radius, color, tier: this.tiers[index] };
+    this.nextBall = { radius, color, tier };
   }
 
   private previewNextBall({ ballRadius, ballColor }: {
@@ -247,18 +279,6 @@ export class Game extends Scene {
     previewBall.fillCircle(WIDTH - 125, 150, ballRadius);
     previewBall.lineStyle(4, PINK_100);
     previewBall.strokeCircle(WIDTH - 125, 150, ballRadius);
-  }
-
-  private cursorHoldNextBall({ pointer }: {
-    pointer: Phaser.Input.Pointer;
-  }) {
-    const actual = this.actualBall;
-    actual.clear();
-
-    actual.fillStyle(this.nextBall.color);
-    actual.fillCircle(pointer.x, pointer.y, this.nextBall.radius);
-    actual.lineStyle(4, PINK_100);
-    actual.strokeCircle(pointer.x, pointer.y, this.nextBall.radius);
   }
 
   private previewStoredBall({ ballRadius, ballColor }: {
