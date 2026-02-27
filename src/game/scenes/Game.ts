@@ -189,20 +189,20 @@ export class Game extends Scene {
     const graphics = this.ballContainer;
     graphics.lineStyle(thickness, PINK_100);
 
-    // Bottom wall
+    // Floor
     this.matter.add.rectangle(x, y - (thickness / 2) + height / 2, width, thickness, { isStatic: true });
     graphics.moveTo(x - width / 2, y - (thickness / 2) + height / 2);
     graphics.lineTo(x + width / 2, y - (thickness / 2) + height / 2);
 
     // Left wall
-    this.matter.add.rectangle(x - width / 2, y, thickness, height, { isStatic: true });
-    graphics.moveTo(x - width / 2, y - height / 2);
-    graphics.lineTo(x - width / 2, y + height / 2);
+    this.matter.add.rectangle(x - width / 2 - (thickness / 2), y, thickness, height, { isStatic: true });
+    graphics.moveTo(x - width / 2 - (thickness / 2), y - height / 2);
+    graphics.lineTo(x - width / 2 - (thickness / 2), y + height / 2);
 
     // Right wall
-    this.matter.add.rectangle(x + width / 2, y, thickness, height, { isStatic: true });
-    graphics.moveTo(x + width / 2, y - height / 2);
-    graphics.lineTo(x + width / 2, y + height / 2);
+    this.matter.add.rectangle(x + width / 2 + (thickness / 2), y, thickness, height, { isStatic: true });
+    graphics.moveTo(x + width / 2 + (thickness / 2), y - height / 2);
+    graphics.lineTo(x + width / 2 + (thickness / 2), y + height / 2);
 
     graphics.strokePath();
 
