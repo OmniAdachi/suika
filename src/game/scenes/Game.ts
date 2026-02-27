@@ -3,15 +3,18 @@ import { HEIGHT, WIDTH } from '../main';
 
 const PINK_100 = 0xfce7f3;
 
+enum TIER { NONE, ONE, TWO, THREE, FOUR, FIVE, SIX }
+
 export class Game extends Scene {
   // BALL RELATED
   // +4, +8, +12, +16, +20
   radii = [12, 16, 24, 36, 54, 74];
   // red-500, orange-400, yellow-400, lime-500, cyan-400, violet-600
   colors = [0xfb2c36, 0xff8904, 0xfcc800, 0x7ccf00, 0x00d3f2, 0x7f22fe];
+  tiers = [TIER.ONE, TIER.TWO, TIER.THREE, TIER.FOUR, TIER.FIVE, TIER.SIX];
 
-  nextBall = { radius: -1, color: -1 };
-  storedBall = { radius: -1, color: -1 };
+  nextBall = { radius: -1, color: -1, tier: TIER.NONE };
+  storedBall = { radius: -1, color: -1, tier: TIER.NONE };
 
   interface: Phaser.GameObjects.Graphics;
   ballContainer: Phaser.GameObjects.Graphics;
@@ -80,6 +83,7 @@ export class Game extends Scene {
         this.storedBall = {
           radius: nb.radius,
           color: nb.color,
+          tier: nb.tier,
         };
 
         this.previewStoredBall({ ballRadius: nb.radius, ballColor: nb.color });
@@ -109,8 +113,9 @@ export class Game extends Scene {
 
         this.matter.add.gameObject(ball, {
           shape: { type: "circle", radius: this.nextBall.radius },
-          restitution: 0.2,
-        });
+          restitution: 0.1,
+        }).setData({ mergeable: true, tier: this.nextBall.tier });
+
         this.generateNextBall();
         this.cursorHoldNextBall({ pointer });
       }
@@ -125,9 +130,45 @@ export class Game extends Scene {
       }
     });
 
-    // Ball collision --> merge same size / color
-    this.matter.world.on(Phaser.Physics.Matter.Events.COLLISION_START, (event: Phaser.Types.Physics.Matter.MatterCollisionData) => {
-      // console.log(event);
+    // Handle ball collision and merging
+    this.matter.world.on("collisionstart", (
+      _: Phaser.Physics.Matter.Events.CollisionStartEvent,
+      bodyA: MatterJS.BodyType,
+      bodyB: MatterJS.BodyType
+    ) => {
+      const objA = bodyA.gameObject, objB = bodyB.gameObject;
+      const mergeableA = objA?.getData("mergeable");
+      const mergeableB = objB?.getData("mergeable");
+
+      if(!mergeableA || !mergeableB) return;
+
+      const tierA = objA?.getData("tier") as TIER;
+      const tierB = objB?.getData("tier") as TIER;
+
+      if(tierA !== tierB) return;
+
+      // Merge same tiers to next tier
+      // A is usually the static one
+      // B is usually the moving one
+
+      // Merge B into A
+      // Replace A, remove B
+      const nextTier = this.getNextTierBall(tierA);
+
+      // Get B coordinates and create new ball with upgraded tier to take its place
+      const { x, y } = bodyB.position;
+
+      const ball = this.add.circle(x, y, nextTier.radius, nextTier.color);
+      ball.setStrokeStyle(4, PINK_100);
+
+      objA?.destroy();
+
+      this.matter.add.gameObject(ball, {
+        shape: { type: "circle", radius: nextTier.radius },
+        restitution: 0.2,
+      }).setData({ mergeable: true, tier: nextTier.tier });
+
+      objB?.destroy();
     });
   }
 
@@ -171,6 +212,20 @@ export class Game extends Scene {
     graphics.strokePath();
   }
 
+  private getNextTierBall(tier: TIER) {
+    const index = this.tiers.indexOf(tier);
+    const maxIndex = this.tiers.length - 1;
+    let next = index + 1;
+
+    if(next > maxIndex) next = 0;
+
+    const nextRadius = this.radii[next];
+    const nextColor = this.colors[next];
+    const nextTier = this.tiers[next];
+
+    return { radius: nextRadius, color: nextColor, tier: nextTier };
+  }
+
   private generateNextBall() {
     // Randomize ball generation
     // TODO: update logic to be able to spawn unlocked balls ocassionally
@@ -179,7 +234,7 @@ export class Game extends Scene {
     const color = this.colors[index];
 
     this.previewNextBall({ ballRadius: radius, ballColor: color });
-    this.nextBall = { radius, color };
+    this.nextBall = { radius, color, tier: this.tiers[index] };
   }
 
   private previewNextBall({ ballRadius, ballColor }: {
