@@ -116,7 +116,7 @@ export class Game extends Scene {
         this.activePointer = pointer;
 
         const ball = this.add.circle(pointer.x, pointer.y, this.currentBall.radius, this.currentBall.color);
-        ball.setStrokeStyle(4, PINK_100);
+        ball.setStrokeStyle(1, PINK_100);
 
         this.matter.add.gameObject(ball, {
           shape: { type: "circle", radius: this.currentBall.radius },
@@ -167,7 +167,7 @@ export class Game extends Scene {
       const { x, y } = bodyB.position;
 
       const ball = this.add.circle(x, y, nextTier.radius, nextTier.color);
-      ball.setStrokeStyle(4, PINK_100);
+      ball.setStrokeStyle(1, PINK_100);
 
       objA?.destroy();
 
@@ -258,7 +258,7 @@ export class Game extends Scene {
 
     current.fillStyle(this.currentBall.color);
     current.fillCircle(pointer.x, pointer.y, this.currentBall.radius);
-    current.lineStyle(4, PINK_100);
+    current.lineStyle(1, PINK_100);
     current.strokeCircle(pointer.x, pointer.y, this.currentBall.radius);
   }
 
@@ -277,7 +277,7 @@ export class Game extends Scene {
 
     previewBall.fillStyle(ballColor);
     previewBall.fillCircle(WIDTH - 125, 150, ballRadius);
-    previewBall.lineStyle(4, PINK_100);
+    previewBall.lineStyle(1, PINK_100);
     previewBall.strokeCircle(WIDTH - 125, 150, ballRadius);
   }
 
@@ -289,7 +289,7 @@ export class Game extends Scene {
 
     storedBall.fillStyle(ballColor);
     storedBall.fillCircle(WIDTH - 125, 375, ballRadius);
-    storedBall.lineStyle(4, PINK_100);
+    storedBall.lineStyle(1, PINK_100);
     storedBall.strokeCircle(WIDTH - 125, 375, ballRadius);
   }
 }
