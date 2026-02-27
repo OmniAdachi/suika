@@ -9,8 +9,13 @@ export class Game extends Scene {
   // BALL RELATED
   // +4, +8, +12, +16, +20
   radii = [12, 16, 24, 36, 54, 74];
-  // red-500, orange-400, yellow-400, lime-500, cyan-400, violet-600
-  colors = [0xfb2c36, 0xff8904, 0xfcc800, 0x7ccf00, 0x00d3f2, 0x7f22fe];
+  colors = [
+    // cherry, strawberry, grape, tangerine, orange
+    // red-600, red-400, violet-600, amber-400, orange-500
+    0xfb2c36, 0xff8904, 0xfcc800, 0x7ccf00, 0x00d3f2, 0x7f22fe,
+    // apple, korean pear, peach, pineapple, melon, watermelon
+    // red-600, yellow-300, pink-300, lime-300, green-500
+  ];
   tiers = [TIER.ONE, TIER.TWO, TIER.THREE, TIER.FOUR, TIER.FIVE, TIER.SIX];
 
   currentBall = { radius: -1, color: -1, tier: TIER.NONE };
@@ -144,40 +149,60 @@ export class Game extends Scene {
       bodyA: MatterJS.BodyType,
       bodyB: MatterJS.BodyType
     ) => {
-      const objA = bodyA.gameObject, objB = bodyB.gameObject;
-      const mergeableA = objA?.getData("mergeable");
-      const mergeableB = objB?.getData("mergeable");
-
-      if(!mergeableA || !mergeableB) return;
-
-      const tierA = objA?.getData("tier") as TIER;
-      const tierB = objB?.getData("tier") as TIER;
-
-      if(tierA !== tierB) return;
-
-      // Merge same tiers to next tier
-      // A is usually the static one
-      // B is usually the moving one
-
-      // Merge B into A
-      // Replace A, remove B
-      const nextTier = this.getNextTierBall(tierA);
-
-      // Get B coordinates and create new ball with upgraded tier to take its place
-      const { x, y } = bodyB.position;
-
-      const ball = this.add.circle(x, y, nextTier.radius, nextTier.color);
-      ball.setStrokeStyle(1, PINK_100);
-
-      objA?.destroy();
-
-      this.matter.add.gameObject(ball, {
-        shape: { type: "circle", radius: nextTier.radius },
-        restitution: 0.2,
-      }).setData({ mergeable: true, tier: nextTier.tier });
-
-      objB?.destroy();
+      this.handleMerging(bodyA, bodyB);
     });
+
+    this.matter.world.on("collisionactive", (
+      _: Phaser.Physics.Matter.Events.CollisionActiveEvent,
+      bodyA: MatterJS.BodyType,
+      bodyB: MatterJS.BodyType
+    ) => {
+      this.handleMerging(bodyA, bodyB);
+    });
+
+    this.matter.world.on("collisionend", (
+      _: Phaser.Physics.Matter.Events.CollisionEndEvent,
+      bodyA: MatterJS.BodyType,
+      bodyB: MatterJS.BodyType
+    ) => {
+      this.handleMerging(bodyA, bodyB);
+    });
+  }
+
+  private handleMerging(bodyA: MatterJS.BodyType, bodyB: MatterJS.BodyType) {
+    const objA = bodyA.gameObject, objB = bodyB.gameObject;
+    const mergeableA = objA?.getData("mergeable");
+    const mergeableB = objB?.getData("mergeable");
+
+    if(!mergeableA || !mergeableB) return;
+
+    const tierA = objA?.getData("tier") as TIER;
+    const tierB = objB?.getData("tier") as TIER;
+
+    if(tierA !== tierB) return;
+
+    // Merge same tiers to next tier
+    // A is usually the static one
+    // B is usually the moving one
+
+    // Merge B into A
+    // Replace A, remove B
+    const nextTier = this.getNextTierBall(tierA);
+
+    // Get B coordinates and create new ball with upgraded tier to take its place
+    const { x, y } = bodyB.position;
+
+    const ball = this.add.circle(x, y, nextTier.radius, nextTier.color);
+    ball.setStrokeStyle(1, PINK_100);
+
+    objA?.destroy();
+
+    this.matter.add.gameObject(ball, {
+      shape: { type: "circle", radius: nextTier.radius },
+      restitution: 0.2,
+    }).setData({ mergeable: true, tier: nextTier.tier });
+
+    objB?.destroy();
   }
 
   private renderBallContainer({ width, height, x, y, thickness}: {
