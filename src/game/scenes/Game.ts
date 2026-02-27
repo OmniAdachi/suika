@@ -21,6 +21,8 @@ export class Game extends Scene {
   currentBall = { radius: -1, color: -1, tier: TIER.NONE };
   nextBall = { radius: -1, color: -1, tier: TIER.NONE };
   storedBall = { radius: -1, color: -1, tier: TIER.NONE };
+  score = 0
+  FibonacciSequence = [1,1,2,3,5,8,13,21,34,55,89]
 
   interface: Phaser.GameObjects.Graphics;
   ballContainer: Phaser.GameObjects.Graphics;
@@ -203,6 +205,7 @@ export class Game extends Scene {
     }).setData({ mergeable: true, tier: nextTier.tier });
 
     objB?.destroy();
+    this.increaseScore
   }
 
   private renderBallContainer({ width, height, x, y, thickness}: {
@@ -316,5 +319,12 @@ export class Game extends Scene {
     storedBall.fillCircle(WIDTH - 125, 375, ballRadius);
     storedBall.lineStyle(1, PINK_100);
     storedBall.strokeCircle(WIDTH - 125, 375, ballRadius);
+  }
+  private increaseScore(tier: TIER){
+    const index = this.tiers.indexOf(tier);
+    const CurrentFib = this.FibonacciSequence.indexOf(tier)
+    
+    this.score = this.score + (index * 2 + CurrentFib)
+
   }
 }
